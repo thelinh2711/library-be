@@ -7,12 +7,10 @@ import com.example.library_be.dto.response.ApiResponse;
 import com.example.library_be.dto.response.auth.AuthResponse;
 import com.example.library_be.dto.response.user.UserResponse;
 import com.example.library_be.service.AuthService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -27,18 +25,27 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ApiResponse<AuthResponse> login(@RequestBody @Valid LoginRequest request) {
-        return ApiResponse.success(authService.login(request));
+    public ApiResponse<AuthResponse> login(
+            @RequestBody @Valid LoginRequest request,
+            HttpServletResponse response
+    ) {
+        return ApiResponse.success(authService.login(request, response));
     }
 
     @PostMapping("/refresh")
-    public ApiResponse<AuthResponse> refresh(@RequestBody @Valid RefreshTokenRequest request) {
-        return ApiResponse.success(authService.refresh(request));
+    public ApiResponse<AuthResponse> refresh(
+            @CookieValue("refreshToken") String refreshToken,
+            HttpServletResponse response
+    ) {
+        return ApiResponse.success(authService.refresh(refreshToken, response));
     }
 
     @PostMapping("/logout")
-    public ApiResponse<?> logout(@RequestBody RefreshTokenRequest request) {
-        authService.logout(request);
+    public ApiResponse<?> logout(
+            @CookieValue("refreshToken") String refreshToken,
+            HttpServletResponse response
+    ) {
+        authService.logout(refreshToken, response);
         return ApiResponse.success(null);
     }
 
