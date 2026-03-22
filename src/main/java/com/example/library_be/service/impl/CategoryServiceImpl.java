@@ -1,0 +1,75 @@
+package com.example.library_be.service.impl;
+
+import com.example.library_be.dto.request.category.CategoryCreateRequest;
+import com.example.library_be.dto.request.category.CategoryUpdateRequest;
+import com.example.library_be.dto.response.category.CategoryResponse;
+import com.example.library_be.entity.Category;
+import com.example.library_be.exception.AppException;
+import com.example.library_be.exception.ErrorCode;
+import com.example.library_be.mapper.CategoryMapper;
+import com.example.library_be.repository.CategoryRepository;
+import com.example.library_be.service.CategoryService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class CategoryServiceImpl implements CategoryService {
+
+    private final CategoryRepository categoryRepository;
+    private final CategoryMapper categoryMapper;
+
+    @Override
+    public CategoryResponse create(CategoryCreateRequest request) {
+        if (categoryRepository.existsByName(request.getName())) {
+            throw new AppException(ErrorCode.CATEGORY_ALREADY_EXISTS);
+        }
+
+        Category category = categoryMapper.toEntity(request);
+
+        return categoryMapper.toResponse(categoryRepository.save(category));
+    }
+
+    @Override
+    public List<CategoryResponse> getAll() {
+        return categoryRepository.findAll()
+                .stream()
+                .map(categoryMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public CategoryResponse getById(UUID id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        return categoryMapper.toResponse(category);
+    }
+
+    @Override
+    public CategoryResponse update(UUID id, CategoryUpdateRequest request) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        // check name duplicate (trừ chính nó)
+        if (categoryRepository.existsByName(request.getName())
+                && !category.getName().equals(request.getName())) {
+            throw new AppException(ErrorCode.CATEGORY_ALREADY_EXISTS);
+        }
+
+        categoryMapper.update(category, request);
+
+        return categoryMapper.toResponse(categoryRepository.save(category));
+    }
+
+    @Override
+    public void delete(UUID id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        categoryRepository.delete(category);
+    }
+}

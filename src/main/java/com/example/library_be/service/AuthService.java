@@ -5,14 +5,18 @@ import com.example.library_be.dto.request.auth.RefreshTokenRequest;
 import com.example.library_be.dto.request.user.RegisterRequest;
 import com.example.library_be.dto.response.auth.AuthResponse;
 import com.example.library_be.dto.response.user.UserResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 public interface AuthService {
     UserResponse register(RegisterRequest request);
 
-    AuthResponse login(LoginRequest request);
+    // thêm HttpServletResponse để set cookie
+    AuthResponse login(LoginRequest request, HttpServletResponse response);
 
-    AuthResponse refresh(RefreshTokenRequest request);
+    // nhận refreshToken từ cookie (String)
+    AuthResponse refresh(String refreshToken, HttpServletResponse response);
 
-    void logout(RefreshTokenRequest request);
+    // logout dùng refreshToken từ cookie
+    void logout(String refreshToken, HttpServletResponse response);
 }
 

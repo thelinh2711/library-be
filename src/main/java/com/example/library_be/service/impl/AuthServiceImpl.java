@@ -15,9 +15,11 @@ import com.example.library_be.repository.UserRepository;
 import com.example.library_be.security.JwtService;
 import com.example.library_be.service.AuthService;
 import com.example.library_be.service.RedisService;
+import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -53,7 +55,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request, HttpServletResponse response) {
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -69,14 +71,16 @@ public class AuthServiceImpl implements AuthService {
         String key = "refresh_token:" + user.getId();
         redisService.save(key, refreshToken, jwtService.getRefreshExpiration());
 
-        return authMapper.toAuthResponse(accessToken, refreshToken);
+        // ✅ set cookie
+        addRefreshTokenCookie(response, refreshToken);
+
+        // ❌ KHÔNG trả refreshToken nữa
+        return authMapper.toAuthResponse(accessToken);
     }
 
     // ================= REFRESH =================
     @Override
-    public AuthResponse refresh(RefreshTokenRequest request) {
-
-        String refreshToken = request.getRefreshToken();
+    public AuthResponse refresh(String refreshToken, HttpServletResponse response) {
 
         if (!jwtService.isTokenValid(refreshToken) || !jwtService.isRefreshToken(refreshToken)) {
             throw new AppException(ErrorCode.INVALID_REFRESH_TOKEN);
@@ -97,23 +101,43 @@ public class AuthServiceImpl implements AuthService {
         String newAccessToken = jwtService.generateAccessToken(user);
         String newRefreshToken = jwtService.generateRefreshToken(user);
 
+        // update Redis
         redisService.save(key, newRefreshToken, jwtService.getRefreshExpiration());
 
-        return authMapper.toAuthResponse(newAccessToken, newRefreshToken);
+        // ✅ set cookie mới
+        addRefreshTokenCookie(response, newRefreshToken);
+
+        return authMapper.toAuthResponse(newAccessToken);
     }
 
     // ================= LOGOUT =================
     @Override
-    public void logout(RefreshTokenRequest request) {
-
-        String refreshToken = request.getRefreshToken();
+    public void logout(String refreshToken, HttpServletResponse response) {
 
         if (!jwtService.isTokenValid(refreshToken)) {
-            return; // logout mềm
+            return;
         }
 
         String userId = jwtService.extractUserId(refreshToken);
 
         redisService.delete("refresh_token:" + userId);
+
+        // ✅ xoá cookie
+        Cookie cookie = new Cookie("refreshToken", null);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+
+        response.addCookie(cookie);
+    }
+
+    private void addRefreshTokenCookie(HttpServletResponse response, String token) {
+        Cookie cookie = new Cookie("refreshToken", token);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge((int) (jwtService.getRefreshExpiration() / 1000));
+        cookie.setSecure(false); // dev
+
+        response.addCookie(cookie);
     }
 }

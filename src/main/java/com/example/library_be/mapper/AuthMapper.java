@@ -6,10 +6,9 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface AuthMapper {
 
-    default AuthResponse toAuthResponse(String accessToken, String refreshToken) {
+    default AuthResponse toAuthResponse(String accessToken) {
         return AuthResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
                 .build();
     }
 }
