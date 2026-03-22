@@ -18,7 +18,8 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(1008, "Refresh token không hợp lệ", HttpStatus.UNAUTHORIZED),
     UNAUTHENTICATED(1009, "Chưa xác thực", HttpStatus.UNAUTHORIZED),
     CATEGORY_NOT_FOUND(1010, "Category not found", HttpStatus.NOT_FOUND),
-    CATEGORY_ALREADY_EXISTS(1011, "Category already exists", HttpStatus.BAD_REQUEST);
+    CATEGORY_ALREADY_EXISTS(1011, "Category already exists", HttpStatus.BAD_REQUEST),
+    AUTHOR_NOT_FOUND(1012, "Author not found", HttpStatus.NOT_FOUND),
     ;
 
     ErrorCode(int code, String message, HttpStatus httpStatusCode) {
