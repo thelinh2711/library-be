@@ -20,6 +20,10 @@ public enum ErrorCode {
     CATEGORY_NOT_FOUND(1010, "Category not found", HttpStatus.NOT_FOUND),
     CATEGORY_ALREADY_EXISTS(1011, "Category already exists", HttpStatus.BAD_REQUEST),
     AUTHOR_NOT_FOUND(1012, "Author not found", HttpStatus.NOT_FOUND),
+    BOOK_NOT_FOUND(1013, "Book not found", HttpStatus.NOT_FOUND),
+    CATEGORY_IN_USE(1014, "Không thể xóa category vì đang có sách sử dụng", HttpStatus.BAD_REQUEST),
+    AUTHOR_IN_USE(1015, "Cannot delete author because it is being used by books", HttpStatus.BAD_REQUEST),
+    INVALID_QUANTITY(1016, "Available quantity must be less than or equal to total quantity", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatus httpStatusCode) {

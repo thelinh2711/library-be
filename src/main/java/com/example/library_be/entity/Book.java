@@ -1,21 +1,24 @@
 package com.example.library_be.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
 @Table(name = "books")
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"bookAuthors", "bookCategories"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Book {
 
     @Id
@@ -48,5 +51,17 @@ public class Book {
 
     @Column(length = 1000)
     private String description;
+
+    @Column(length = 500)
+    private String imageUrl;
+
+    @Column(length = 255)
+    private String imagePublicId;
+
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<BookAuthor> bookAuthors;
+
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<BookCategory> bookCategories;
 }
 
