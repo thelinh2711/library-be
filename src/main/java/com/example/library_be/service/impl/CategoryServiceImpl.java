@@ -10,6 +10,7 @@ import com.example.library_be.mapper.CategoryMapper;
 import com.example.library_be.repository.CategoryRepository;
 import com.example.library_be.service.CategoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -70,6 +71,10 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
 
-        categoryRepository.delete(category);
+        try {
+            categoryRepository.delete(category);
+        } catch (DataIntegrityViolationException e) {
+            throw new AppException(ErrorCode.CATEGORY_IN_USE);
+        }
     }
 }

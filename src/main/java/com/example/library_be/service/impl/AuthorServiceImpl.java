@@ -10,6 +10,7 @@ import com.example.library_be.mapper.AuthorMapper;
 import com.example.library_be.repository.AuthorRepository;
 import com.example.library_be.service.AuthorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -59,6 +60,10 @@ public class AuthorServiceImpl implements AuthorService {
         Author author = authorRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.AUTHOR_NOT_FOUND));
 
-        authorRepository.delete(author);
+        try {
+            authorRepository.delete(author);
+        } catch (DataIntegrityViolationException e) {
+            throw new AppException(ErrorCode.AUTHOR_IN_USE);
+        }
     }
 }
