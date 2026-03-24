@@ -6,6 +6,7 @@ import com.example.library_be.dto.response.ApiResponse;
 import com.example.library_be.dto.response.author.AuthorResponse;
 import com.example.library_be.service.AuthorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ public class AuthorController {
     private final AuthorService authorService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ApiResponse<AuthorResponse> create(@RequestBody @Valid AuthorCreateRequest request) {
         return ApiResponse.success(authorService.create(request));
     }
@@ -35,14 +37,13 @@ public class AuthorController {
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<AuthorResponse> update(
-            @PathVariable UUID id,
-            @RequestBody @Valid AuthorUpdateRequest request
-    ) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
+    public ApiResponse<AuthorResponse> update(@PathVariable UUID id, @RequestBody @Valid AuthorUpdateRequest request) {
         return ApiResponse.success(authorService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         authorService.delete(id);
         return ApiResponse.success("Xóa tác giả thành công", null);

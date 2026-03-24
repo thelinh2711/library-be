@@ -24,6 +24,9 @@ public enum ErrorCode {
     CATEGORY_IN_USE(1014, "Không thể xóa category vì đang có sách sử dụng", HttpStatus.BAD_REQUEST),
     AUTHOR_IN_USE(1015, "Cannot delete author because it is being used by books", HttpStatus.BAD_REQUEST),
     INVALID_QUANTITY(1016, "Available quantity must be less than or equal to total quantity", HttpStatus.BAD_REQUEST),
+    STUDENT_NOT_FOUND(1017, "Không tìm thấy sinh viên", HttpStatus.NOT_FOUND),
+    USER_EMAIL_EXIST(1018, "Email đã tồn tại", HttpStatus.BAD_REQUEST),
+    STUDENT_CODE_EXIST(1019, "Mã sinh viên đã tồn tại", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatus httpStatusCode) {

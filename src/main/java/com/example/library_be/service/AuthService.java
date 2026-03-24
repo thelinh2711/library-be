@@ -8,7 +8,7 @@ import com.example.library_be.dto.response.user.UserResponse;
 import jakarta.servlet.http.HttpServletResponse;
 
 public interface AuthService {
-    UserResponse register(RegisterRequest request);
+    UserResponse createUser(RegisterRequest request);
 
     // thêm HttpServletResponse để set cookie
     AuthResponse login(LoginRequest request, HttpServletResponse response);

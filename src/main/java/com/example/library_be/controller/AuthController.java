@@ -10,6 +10,7 @@ import com.example.library_be.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,9 +20,10 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/register")
-    public ApiResponse<UserResponse> register(@RequestBody @Valid RegisterRequest request) {
-        return ApiResponse.success(authService.register(request));
+    @PostMapping("/create-user")
+    //@PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<UserResponse> createUser(@RequestBody @Valid RegisterRequest request) {
+        return ApiResponse.success(authService.createUser(request));
     }
 
     @PostMapping("/login")
