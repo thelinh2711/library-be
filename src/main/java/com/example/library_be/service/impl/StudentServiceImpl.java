@@ -2,6 +2,7 @@ package com.example.library_be.service.impl;
 
 import com.example.library_be.dto.request.student.StudentCreateRequest;
 import com.example.library_be.dto.request.student.StudentImportRequest;
+import com.example.library_be.dto.request.student.StudentSearchRequest;
 import com.example.library_be.dto.request.student.StudentUpdateRequest;
 import com.example.library_be.dto.response.student.StudentResponse;
 import com.example.library_be.entity.Student;
@@ -15,6 +16,10 @@ import com.example.library_be.repository.UserRepository;
 import com.example.library_be.service.StudentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +43,7 @@ public class StudentServiceImpl implements StudentService {
 
     @Transactional
     @Override
-    public void importStudents(List<@Valid StudentImportRequest> requests) {
+    public void importStudents(List<StudentImportRequest> requests) {
 
         List<Student> students = new ArrayList<>();
 
@@ -98,11 +103,17 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public List<StudentResponse> getAll() {
-        return studentRepository.findAll()
-                .stream()
-                .map(studentMapper::toResponse)
-                .collect(Collectors.toList());
+    public Page<StudentResponse> search(StudentSearchRequest request) {
+        Sort sort = Sort.by(request.getSortBy());
+        sort = "desc".equalsIgnoreCase(request.getSortDir()) ? sort.descending() : sort.ascending();
+        Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+        // Đổi empty string thành null để query IS NULL hoạt động đúng
+        String keyword   = (request.getKeyword()   == null || request.getKeyword().isBlank())   ? null : request.getKeyword();
+        String className = (request.getClassName() == null || request.getClassName().isBlank()) ? null : request.getClassName();
+        String faculty   = (request.getFaculty()   == null || request.getFaculty().isBlank())   ? null : request.getFaculty();
+        Page<Student> page = studentRepository.searchStudents(keyword, className, faculty, pageable);
+
+        return page.map(studentMapper::toResponse);
     }
 
     @Transactional
@@ -121,5 +132,15 @@ public class StudentServiceImpl implements StudentService {
             throw new AppException(ErrorCode.STUDENT_NOT_FOUND);
         }
         studentRepository.deleteById(id);
+    }
+
+    public List<String> getDistinctFaculties() {
+        return studentRepository.findDistinctFaculties();
+    }
+
+    public List<String> getDistinctClasses(String faculty) {
+        if (faculty == null || faculty.isBlank())
+            return studentRepository.findDistinctClasses();
+        return studentRepository.findDistinctClassesByFaculty(faculty);
     }
 }
