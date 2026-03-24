@@ -34,7 +34,7 @@ public class AuthServiceImpl implements AuthService {
 
     // ================= REGISTER =================
     @Override
-    public UserResponse register(RegisterRequest request) {
+    public UserResponse createUser(RegisterRequest request) {
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
@@ -47,7 +47,9 @@ public class AuthServiceImpl implements AuthService {
         User user = userMapper.toUser(request);
 
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.MEMBER);
+
+        // 🔥 chỉ tạo LIBRARIAN
+        user.setRole(Role.LIBRARIAN);
 
         userRepository.save(user);
 
