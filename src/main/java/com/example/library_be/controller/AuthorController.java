@@ -1,8 +1,10 @@
 package com.example.library_be.controller;
 
 import com.example.library_be.dto.request.author.AuthorCreateRequest;
+import com.example.library_be.dto.request.author.AuthorSearchRequest;
 import com.example.library_be.dto.request.author.AuthorUpdateRequest;
 import com.example.library_be.dto.response.ApiResponse;
+import com.example.library_be.dto.response.PageResponse;
 import com.example.library_be.dto.response.author.AuthorResponse;
 import com.example.library_be.service.AuthorService;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +29,8 @@ public class AuthorController {
     }
 
     @GetMapping
-    public ApiResponse<List<AuthorResponse>> getAll() {
-        return ApiResponse.success(authorService.getAll());
+    public ApiResponse<PageResponse<AuthorResponse>> getAll(@Valid AuthorSearchRequest request) {
+        return ApiResponse.success(authorService.getAll(request));
     }
 
     @GetMapping("/{id}")

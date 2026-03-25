@@ -13,13 +13,11 @@ public interface CategoryService {
 
     CategoryResponse create(CategoryCreateRequest request);
 
-    //List<CategoryResponse> getAll();
-
     CategoryResponse getById(UUID id);
 
     CategoryResponse update(UUID id, CategoryUpdateRequest request);
 
     void delete(UUID id);
 
-    public PageResponse<CategoryResponse> search(CategorySearchRequest request);
+    PageResponse<CategoryResponse> search(CategorySearchRequest request);
 }
