@@ -3,6 +3,7 @@ package com.example.library_be.service;
 import com.example.library_be.dto.request.book.BookCreateRequest;
 import com.example.library_be.dto.request.book.BookSearchRequest;
 import com.example.library_be.dto.request.book.BookUpdateRequest;
+import com.example.library_be.dto.response.PageResponse;
 import com.example.library_be.dto.response.book.BookDetailResponse;
 import com.example.library_be.dto.response.book.BookResponse;
 import org.springframework.data.domain.Page;
@@ -18,7 +19,7 @@ public interface BookService {
     void delete(UUID id);
 
     // search + pagination
-    Page<BookResponse> search(BookSearchRequest request);
+    PageResponse<BookResponse> search(BookSearchRequest request);
 
     // get detail by id
     BookDetailResponse getById(UUID id);
