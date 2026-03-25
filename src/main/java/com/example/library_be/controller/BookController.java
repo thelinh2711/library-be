@@ -4,6 +4,7 @@ import com.example.library_be.dto.request.book.BookCreateRequest;
 import com.example.library_be.dto.request.book.BookSearchRequest;
 import com.example.library_be.dto.request.book.BookUpdateRequest;
 import com.example.library_be.dto.response.ApiResponse;
+import com.example.library_be.dto.response.PageResponse;
 import com.example.library_be.dto.response.book.BookDetailResponse;
 import com.example.library_be.dto.response.book.BookResponse;
 import com.example.library_be.service.BookService;
@@ -42,7 +43,7 @@ public class BookController {
     }
 
     @GetMapping
-    public ApiResponse<Page<BookResponse>> search(BookSearchRequest request) {
+    public ApiResponse<PageResponse<BookResponse>> search(BookSearchRequest request) {
         return ApiResponse.success(bookService.search(request));
     }
 

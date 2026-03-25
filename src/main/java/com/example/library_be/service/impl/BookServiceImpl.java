@@ -3,6 +3,7 @@ package com.example.library_be.service.impl;
 import com.example.library_be.dto.request.book.BookCreateRequest;
 import com.example.library_be.dto.request.book.BookSearchRequest;
 import com.example.library_be.dto.request.book.BookUpdateRequest;
+import com.example.library_be.dto.response.PageResponse;
 import com.example.library_be.dto.response.book.BookDetailResponse;
 import com.example.library_be.dto.response.book.BookResponse;
 import com.example.library_be.entity.Book;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -175,7 +177,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public Page<BookResponse> search(BookSearchRequest request) {
+    public PageResponse<BookResponse> search(BookSearchRequest request) {
 
         String keyword = request.getKeyword();
         if (keyword != null && keyword.trim().isEmpty()) {
@@ -184,16 +186,26 @@ public class BookServiceImpl implements BookService {
 
         Pageable pageable = PageRequest.of(
                 request.getPage(),
-                request.getSize()
+                request.getSize(),
+                Sort.by(request.getSort(), "title")
         );
 
-        Page<Book> books = bookRepository.searchBooks(
+        Page<Book> page = bookRepository.searchBooks(
                 keyword,
                 request.getCategory(),
                 pageable
         );
 
-        return books.map(bookMapper::toResponse);
+        return PageResponse.<BookResponse>builder()
+                .content(page.getContent().stream()
+                        .map(bookMapper::toResponse)
+                        .toList())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
     }
 
     @Override
