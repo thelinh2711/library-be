@@ -1,8 +1,10 @@
 package com.example.library_be.controller;
 
 import com.example.library_be.dto.request.category.CategoryCreateRequest;
+import com.example.library_be.dto.request.category.CategorySearchRequest;
 import com.example.library_be.dto.request.category.CategoryUpdateRequest;
 import com.example.library_be.dto.response.ApiResponse;
+import com.example.library_be.dto.response.PageResponse;
 import com.example.library_be.dto.response.category.CategoryResponse;
 import com.example.library_be.service.CategoryService;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +29,8 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ApiResponse<List<CategoryResponse>> getAll() {
-        return ApiResponse.success(categoryService.getAll());
+    public ApiResponse<PageResponse<CategoryResponse>> getCategories(@Valid CategorySearchRequest request) {
+        return ApiResponse.success(categoryService.search(request));
     }
 
     @GetMapping("/{id}")
