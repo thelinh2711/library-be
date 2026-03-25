@@ -1,7 +1,9 @@
 package com.example.library_be.service.impl;
 
 import com.example.library_be.dto.request.author.AuthorCreateRequest;
+import com.example.library_be.dto.request.author.AuthorSearchRequest;
 import com.example.library_be.dto.request.author.AuthorUpdateRequest;
+import com.example.library_be.dto.response.PageResponse;
 import com.example.library_be.dto.response.author.AuthorResponse;
 import com.example.library_be.entity.Author;
 import com.example.library_be.exception.AppException;
@@ -11,6 +13,10 @@ import com.example.library_be.repository.AuthorRepository;
 import com.example.library_be.service.AuthorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,11 +36,25 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
-    public List<AuthorResponse> getAll() {
-        return authorRepository.findAll()
-                .stream()
-                .map(authorMapper::toResponse)
-                .toList();
+    public PageResponse<AuthorResponse> getAll(AuthorSearchRequest request) {
+        Pageable pageable = PageRequest.of(
+                request.getPage(),
+                request.getSize(),
+                Sort.by(request.getSort(), "name")
+        );
+
+        Page<Author> page = authorRepository.findByNameContainingIgnoreCase(request.getName(), pageable);
+
+        return PageResponse.<AuthorResponse>builder()
+                .content(page.getContent().stream()
+                        .map(authorMapper::toResponse)
+                        .toList())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
     }
 
     @Override

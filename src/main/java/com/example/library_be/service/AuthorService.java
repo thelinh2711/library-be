@@ -1,7 +1,9 @@
 package com.example.library_be.service;
 
 import com.example.library_be.dto.request.author.AuthorCreateRequest;
+import com.example.library_be.dto.request.author.AuthorSearchRequest;
 import com.example.library_be.dto.request.author.AuthorUpdateRequest;
+import com.example.library_be.dto.response.PageResponse;
 import com.example.library_be.dto.response.author.AuthorResponse;
 
 import java.util.List;
@@ -11,7 +13,7 @@ public interface AuthorService {
 
     AuthorResponse create(AuthorCreateRequest request);
 
-    List<AuthorResponse> getAll();
+    PageResponse<AuthorResponse> getAll(AuthorSearchRequest request);
 
     AuthorResponse getById(UUID id);
 
