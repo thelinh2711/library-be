@@ -9,6 +9,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -48,6 +49,11 @@ public class Book {
     @Column(nullable = false)
     @Min(0)
     private Integer availableQuantity;
+
+    // Giá bìa sách — dùng để tính phạt hỏng/mất (price × multiplier)
+    @Column(nullable = false, precision = 12, scale = 2)
+    @Min(0)
+    private BigDecimal price;
 
     @Column(length = 1000)
     private String description;

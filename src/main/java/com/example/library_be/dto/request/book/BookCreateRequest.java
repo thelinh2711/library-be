@@ -1,12 +1,15 @@
 package com.example.library_be.dto.request.book;
 
 import com.example.library_be.entity.enums.AuthorRole;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +31,10 @@ public class BookCreateRequest {
 
     @Min(0)
     private Integer availableQuantity;
+
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = true)
+    private BigDecimal price;
 
     private String description;
     private MultipartFile image;

@@ -113,6 +113,8 @@ public class BookServiceImpl implements BookService {
         }
 
         bookMapper.update(book, request);
+        System.out.println("price from request: " + request.getPrice());
+        System.out.println("price after map: " + book.getPrice());
 
         if (request.getImage() != null && !request.getImage().isEmpty()) {
 
