@@ -3,6 +3,7 @@ package com.example.library_be.dto.response.book;
 import lombok.Builder;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,6 +18,7 @@ public class BookResponse {
     private String isbn;
     private Integer quantity;
     private Integer availableQuantity;
+    private BigDecimal price;
     private String description;
     private String imageUrl;
 }
