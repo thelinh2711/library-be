@@ -27,6 +27,26 @@ public enum ErrorCode {
     STUDENT_NOT_FOUND(1017, "Không tìm thấy sinh viên", HttpStatus.NOT_FOUND),
     USER_EMAIL_EXIST(1018, "Email đã tồn tại", HttpStatus.BAD_REQUEST),
     STUDENT_CODE_EXIST(1019, "Mã sinh viên đã tồn tại", HttpStatus.BAD_REQUEST),
+    RESERVATION_ALREADY_EXISTS(1020, "Bạn đã có đặt trước đang chờ xử lý cho cuốn sách này", HttpStatus.BAD_REQUEST),
+    RESERVATION_NOT_FOUND(1021, "Không tìm thấy đặt trước", HttpStatus.NOT_FOUND),
+    RESERVATION_NOT_PENDING(1022, "Đặt trước không ở trạng thái chờ xác nhận", HttpStatus.BAD_REQUEST),
+    RESERVATION_NOT_CONFIRMED(1023, "Đặt trước chưa được xác nhận", HttpStatus.BAD_REQUEST),
+    RESERVATION_EXPIRED(1024, "Đặt trước đã hết hạn giữ chỗ", HttpStatus.BAD_REQUEST),
+
+    BORROW_RECORD_NOT_FOUND(1025, "Không tìm thấy phiếu mượn", HttpStatus.NOT_FOUND),
+    BORROW_ITEM_NOT_FOUND(1026, "Không tìm thấy chi tiết mượn sách", HttpStatus.NOT_FOUND),
+    BORROW_ITEM_ALREADY_RETURNED(1027, "Sách này đã được trả", HttpStatus.BAD_REQUEST),
+    BOOK_NOT_AVAILABLE(1028, "Sách hiện không còn trong kho", HttpStatus.BAD_REQUEST),
+    STUDENT_HAS_UNPAID_FINE(1029, "Sinh viên còn khoản phạt chưa thanh toán", HttpStatus.BAD_REQUEST),
+
+    FINE_NOT_FOUND(1030, "Không tìm thấy phiếu phạt", HttpStatus.NOT_FOUND),
+    FINE_ALREADY_PAID(1031, "Phiếu phạt đã được thanh toán", HttpStatus.BAD_REQUEST),
+    FINE_POLICY_NOT_FOUND(1032, "Không tìm thấy chính sách phạt phù hợp", HttpStatus.NOT_FOUND),
+    DAMAGE_LEVEL_REQUIRED(1033, "Phải chỉ định mức độ khi trạng thái là DAMAGED hoặc LOST", HttpStatus.BAD_REQUEST),
+    RESERVATION_INVALID_STATUS(1013, "Trạng thái đặt trước không hợp lệ", HttpStatus.BAD_REQUEST),
+
+    // ── Common ─────────────────────────────────
+    INVALID_STATUS(1014, "Giá trị trạng thái không hợp lệ", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatus httpStatusCode) {

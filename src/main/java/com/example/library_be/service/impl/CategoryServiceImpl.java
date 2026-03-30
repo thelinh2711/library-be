@@ -41,25 +41,16 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     public PageResponse<CategoryResponse> search(CategorySearchRequest request) {
+
         Pageable pageable = PageRequest.of(
                 request.getPage(),
                 request.getSize(),
                 Sort.by(request.getSort(), "name")
         );
 
-        Page<Category> page = categoryRepository
-                .findByNameContainingIgnoreCase(request.getName(), pageable);
+        Page<Category> page = categoryRepository.findByNameContainingIgnoreCase(request.getName(), pageable);
 
-        return PageResponse.<CategoryResponse>builder()
-                .content(page.getContent().stream()
-                        .map(categoryMapper::toResponse)
-                        .toList())
-                .page(page.getNumber())
-                .size(page.getSize())
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .last(page.isLast())
-                .build();
+        return PageResponse.from(page.map(categoryMapper::toResponse));
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.example.library_be.dto.request.student.StudentImportRequest;
 import com.example.library_be.dto.request.student.StudentSearchRequest;
 import com.example.library_be.dto.request.student.StudentUpdateRequest;
 import com.example.library_be.dto.response.ApiResponse;
+import com.example.library_be.dto.response.PageResponse;
 import com.example.library_be.dto.response.student.StudentResponse;
 import com.example.library_be.service.StudentService;
 import jakarta.validation.Valid;
@@ -64,9 +65,8 @@ public class StudentController {
 
     // ==================== Search + Pagination ====================
     @GetMapping("/search")
-    public ApiResponse<Page<StudentResponse>> search(@Valid StudentSearchRequest request) {
-        Page<StudentResponse> result = studentService.search(request);
-        return ApiResponse.success(result);
+    public ApiResponse<PageResponse<StudentResponse>> search(@Valid StudentSearchRequest request) {
+        return ApiResponse.success(studentService.search(request));
     }
 
     @GetMapping("/faculties")

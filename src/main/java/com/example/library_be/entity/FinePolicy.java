@@ -1,5 +1,6 @@
 package com.example.library_be.entity;
 
+import com.example.library_be.entity.enums.DamageLevel;
 import com.example.library_be.entity.enums.FineType;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -48,8 +49,9 @@ public class FinePolicy {
     private BigDecimal multiplier;
 
     // Nhãn mức độ hỏng để thủ thư chọn (vd: "Hỏng nhẹ", "Hỏng nặng", "Mất sách")
+    @Enumerated(EnumType.STRING)
     @Column(name = "damage_level", length = 50)
-    private String damageLevel;
+    private DamageLevel damageLevel;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;

@@ -4,6 +4,7 @@ import com.example.library_be.dto.request.student.StudentCreateRequest;
 import com.example.library_be.dto.request.student.StudentImportRequest;
 import com.example.library_be.dto.request.student.StudentSearchRequest;
 import com.example.library_be.dto.request.student.StudentUpdateRequest;
+import com.example.library_be.dto.response.PageResponse;
 import com.example.library_be.dto.response.student.StudentResponse;
 import com.example.library_be.entity.Student;
 import com.example.library_be.entity.enums.Role;
@@ -103,17 +104,23 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public Page<StudentResponse> search(StudentSearchRequest request) {
+    public PageResponse<StudentResponse> search(StudentSearchRequest request) {
+
         Sort sort = Sort.by(request.getSortBy());
-        sort = "desc".equalsIgnoreCase(request.getSortDir()) ? sort.descending() : sort.ascending();
+        sort = "desc".equalsIgnoreCase(request.getSortDir())
+                ? sort.descending()
+                : sort.ascending();
+
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
-        // Đổi empty string thành null để query IS NULL hoạt động đúng
-        String keyword   = (request.getKeyword()   == null || request.getKeyword().isBlank())   ? null : request.getKeyword();
+
+        // normalize dữ liệu
+        String keyword   = (request.getKeyword() == null || request.getKeyword().isBlank()) ? null : request.getKeyword();
         String className = (request.getClassName() == null || request.getClassName().isBlank()) ? null : request.getClassName();
-        String faculty   = (request.getFaculty()   == null || request.getFaculty().isBlank())   ? null : request.getFaculty();
+        String faculty   = (request.getFaculty() == null || request.getFaculty().isBlank()) ? null : request.getFaculty();
+
         Page<Student> page = studentRepository.searchStudents(keyword, className, faculty, pageable);
 
-        return page.map(studentMapper::toResponse);
+        return PageResponse.from(page.map(studentMapper::toResponse));
     }
 
     @Transactional
