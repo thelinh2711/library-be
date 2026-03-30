@@ -2,15 +2,18 @@ package com.example.library_be.controller;
 
 import com.example.library_be.dto.request.auth.LoginRequest;
 import com.example.library_be.dto.request.auth.RefreshTokenRequest;
+import com.example.library_be.dto.request.user.ChangePasswordRequest;
 import com.example.library_be.dto.request.user.RegisterRequest;
 import com.example.library_be.dto.response.ApiResponse;
 import com.example.library_be.dto.response.auth.AuthResponse;
 import com.example.library_be.dto.response.user.UserResponse;
+import com.example.library_be.entity.User;
 import com.example.library_be.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -49,6 +52,12 @@ public class AuthController {
     ) {
         authService.logout(refreshToken, response);
         return ApiResponse.success(null);
+    }
+
+    @PutMapping("/change-password")
+    public ApiResponse<String> changePassword(@AuthenticationPrincipal User user, @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(user.getId(), request);
+        return ApiResponse.success("Password changed successfully");
     }
 
 }

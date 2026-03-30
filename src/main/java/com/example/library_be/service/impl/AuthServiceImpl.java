@@ -2,6 +2,7 @@ package com.example.library_be.service.impl;
 
 import com.example.library_be.dto.request.auth.LoginRequest;
 import com.example.library_be.dto.request.auth.RefreshTokenRequest;
+import com.example.library_be.dto.request.user.ChangePasswordRequest;
 import com.example.library_be.dto.request.user.RegisterRequest;
 import com.example.library_be.dto.response.auth.AuthResponse;
 import com.example.library_be.dto.response.user.UserResponse;
@@ -20,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import jakarta.servlet.http.HttpServletResponse;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -141,5 +144,31 @@ public class AuthServiceImpl implements AuthService {
         cookie.setSecure(false); // dev
 
         response.addCookie(cookie);
+    }
+
+    @Override
+    public void changePassword(UUID userId, ChangePasswordRequest request) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        // 1. Sai mật khẩu cũ
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new AppException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        // 2. Confirm không khớp
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
+        }
+
+        // 3. Password mới trùng password cũ
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new AppException(ErrorCode.NEW_PASSWORD_DUPLICATE);
+        }
+
+        // 4. Encode & save
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
     }
 }

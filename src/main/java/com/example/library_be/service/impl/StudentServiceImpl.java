@@ -150,4 +150,13 @@ public class StudentServiceImpl implements StudentService {
             return studentRepository.findDistinctClasses();
         return studentRepository.findDistinctClassesByFaculty(faculty);
     }
+
+    @Override
+    public StudentResponse getMyProfile(UUID studentId) {
+
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new AppException(ErrorCode.STUDENT_NOT_FOUND));
+
+        return studentMapper.toResponse(student);
+    }
 }
