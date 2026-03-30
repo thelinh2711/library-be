@@ -22,6 +22,7 @@ public class BookDetailResponse {
     private BigDecimal price;
     private String description;
     private String imageUrl;
+    private Long version;
 
     private List<AuthorInfoResponse> authors;
     private List<CategoryResponse> categories;

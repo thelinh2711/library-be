@@ -23,6 +23,7 @@ public interface BookMapper {
     // ===== UPDATE =====
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "price", source = "price")
+    @Mapping(target = "version", ignore = true)
     void update(@MappingTarget Book book, BookUpdateRequest request);
 
     // ===== RESPONSE =====

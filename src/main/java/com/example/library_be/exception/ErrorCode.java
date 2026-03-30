@@ -48,6 +48,7 @@ public enum ErrorCode {
 
     // ── Common ─────────────────────────────────
     INVALID_STATUS(1014, "Giá trị trạng thái không hợp lệ", HttpStatus.BAD_REQUEST),
+    CONFLICT(4090, "Dữ liệu đã bị thay đổi bởi người khác. Vui lòng tải lại.", HttpStatus.CONFLICT),
     ;
 
     ErrorCode(int code, String message, HttpStatus httpStatusCode) {

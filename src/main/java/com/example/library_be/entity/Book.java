@@ -64,6 +64,10 @@ public class Book {
     @Column(length = 255)
     private String imagePublicId;
 
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<BookAuthor> bookAuthors;
 
