@@ -4,6 +4,7 @@ import com.example.library_be.dto.request.student.StudentCreateRequest;
 import com.example.library_be.dto.request.student.StudentImportRequest;
 import com.example.library_be.dto.request.student.StudentSearchRequest;
 import com.example.library_be.dto.request.student.StudentUpdateRequest;
+import com.example.library_be.dto.response.PageResponse;
 import com.example.library_be.dto.response.student.StudentResponse;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -16,7 +17,7 @@ public interface StudentService {
 
     StudentResponse getById(UUID id);
 
-    Page<StudentResponse> search(StudentSearchRequest request);
+    PageResponse<StudentResponse> search(StudentSearchRequest request);
 
     StudentResponse update(UUID id, StudentUpdateRequest request);
 

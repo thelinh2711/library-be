@@ -35,7 +35,6 @@ public class AuthorServiceImpl implements AuthorService {
         return authorMapper.toResponse(authorRepository.save(author));
     }
 
-    @Override
     public PageResponse<AuthorResponse> getAll(AuthorSearchRequest request) {
         Pageable pageable = PageRequest.of(
                 request.getPage(),
@@ -45,16 +44,7 @@ public class AuthorServiceImpl implements AuthorService {
 
         Page<Author> page = authorRepository.findByNameContainingIgnoreCase(request.getName(), pageable);
 
-        return PageResponse.<AuthorResponse>builder()
-                .content(page.getContent().stream()
-                        .map(authorMapper::toResponse)
-                        .toList())
-                .page(page.getNumber())
-                .size(page.getSize())
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .last(page.isLast())
-                .build();
+        return PageResponse.from(page.map(authorMapper::toResponse));
     }
 
     @Override

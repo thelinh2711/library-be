@@ -192,22 +192,9 @@ public class BookServiceImpl implements BookService {
                 Sort.by(request.getSort(), "title")
         );
 
-        Page<Book> page = bookRepository.searchBooks(
-                keyword,
-                request.getCategory(),
-                pageable
-        );
+        Page<Book> page = bookRepository.searchBooks(keyword, request.getCategory(), pageable);
 
-        return PageResponse.<BookResponse>builder()
-                .content(page.getContent().stream()
-                        .map(bookMapper::toResponse)
-                        .toList())
-                .page(page.getNumber())
-                .size(page.getSize())
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .last(page.isLast())
-                .build();
+        return PageResponse.from(page.map(bookMapper::toResponse));
     }
 
     @Override
