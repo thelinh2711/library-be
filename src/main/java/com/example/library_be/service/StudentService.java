@@ -26,4 +26,6 @@ public interface StudentService {
 
     List<String> getDistinctFaculties();
     List<String> getDistinctClasses(String faculty);
+
+    StudentResponse getMyProfile(UUID studentId);
 }

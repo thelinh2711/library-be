@@ -43,6 +43,7 @@ public enum ErrorCode {
     FINE_ALREADY_PAID(1031, "Phiếu phạt đã được thanh toán", HttpStatus.BAD_REQUEST),
     FINE_POLICY_NOT_FOUND(1032, "Không tìm thấy chính sách phạt phù hợp", HttpStatus.NOT_FOUND),
     DAMAGE_LEVEL_REQUIRED(1033, "Phải chỉ định mức độ khi trạng thái là DAMAGED hoặc LOST", HttpStatus.BAD_REQUEST),
+    NEW_PASSWORD_DUPLICATE(1034, "Mật khẩu mới phải khác mật khẩu cũ", HttpStatus.BAD_REQUEST),
     RESERVATION_INVALID_STATUS(1013, "Trạng thái đặt trước không hợp lệ", HttpStatus.BAD_REQUEST),
 
     // ── Common ─────────────────────────────────

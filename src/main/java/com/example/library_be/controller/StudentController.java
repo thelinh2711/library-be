@@ -7,11 +7,13 @@ import com.example.library_be.dto.request.student.StudentUpdateRequest;
 import com.example.library_be.dto.response.ApiResponse;
 import com.example.library_be.dto.response.PageResponse;
 import com.example.library_be.dto.response.student.StudentResponse;
+import com.example.library_be.entity.User;
 import com.example.library_be.service.StudentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -82,4 +84,10 @@ public class StudentController {
         return ApiResponse.success(studentService.getDistinctClasses(faculty));
     }
 
+    // chỉ STUDENT được xem thông tin của chính mình
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ApiResponse<StudentResponse> getMyProfile(@AuthenticationPrincipal User user) {
+        return ApiResponse.success(studentService.getMyProfile(user.getId()));
+    }
 }
