@@ -3,14 +3,13 @@ package com.example.library_be.entity;
 import com.example.library_be.entity.enums.BorrowItemStatus;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(
@@ -22,8 +21,10 @@ import java.util.UUID;
         }
 )
 @Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class BorrowItem {
 
+    @EqualsAndHashCode.Include
     @Id
     @UuidGenerator
     @JdbcTypeCode(SqlTypes.VARCHAR)
@@ -52,7 +53,7 @@ public class BorrowItem {
 
     // Một quyển có thể có nhiều Fine (vd: vừa trả muộn vừa làm hỏng)
     @OneToMany(mappedBy = "borrowItem", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Fine> fines = new ArrayList<>();
+    private Set<Fine> fines = new LinkedHashSet<>();
 
     @PrePersist
     public void prePersist() {
