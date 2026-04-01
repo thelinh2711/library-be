@@ -40,6 +40,9 @@ public class BookUpdateRequest {
     private List<BookCreateRequest.AuthorItem> authors;
     private List<UUID> categoryIds;
 
+    @NotNull
+    private Long version;
+
     @Data
     public static class AuthorItem {
         private UUID authorId;

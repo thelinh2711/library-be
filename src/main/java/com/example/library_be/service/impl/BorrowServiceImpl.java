@@ -25,6 +25,9 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +42,14 @@ public class BorrowServiceImpl implements BorrowService {
     private final FinePolicyRepository finePolicyRepository;
     private final BorrowMapper borrowMapper;
 
-    // ── Thủ thư tạo phiếu mượn ──────────────────────────────────────────────
+    // ── Helper: load full graph vào session cache
+    private BorrowRecord fetchFullGraph(UUID id) {
+        borrowRecordRepository.findByIdWithFines(id); // merge fines vào cache
+        return borrowRecordRepository.findByIdWithItems(id)
+                .orElseThrow(() -> new AppException(ErrorCode.BORROW_RECORD_NOT_FOUND));
+    }
+
+    // Thủ thư tạo phiếu mượn
     @Transactional
     @Override
     public BorrowRecordResponse createBorrow(BorrowRequest request) {
@@ -51,7 +61,6 @@ public class BorrowServiceImpl implements BorrowService {
             throw new AppException(ErrorCode.STUDENT_HAS_UNPAID_FINE);
         }
 
-        // Validate reservation nếu có
         BookReservation reservation = null;
         if (request.getReservationId() != null) {
             reservation = reservationRepository.findById(request.getReservationId())
@@ -71,51 +80,67 @@ public class BorrowServiceImpl implements BorrowService {
         record.setStaffNote(request.getStaffNote());
         record = borrowRecordRepository.save(record);
 
+        // BATCH LOAD BOOK
+        List<UUID> bookIds = request.getItems().stream()
+                .map(item -> item.getBookId())
+                .distinct()
+                .toList();
+
+        Map<UUID, Book> bookMap = bookRepository.findAllById(bookIds)
+                .stream()
+                .collect(Collectors.toMap(Book::getId, b -> b));
+
+        // validate đủ book
+        if (bookMap.size() != bookIds.size()) {
+            throw new AppException(ErrorCode.BOOK_NOT_FOUND);
+        }
+
         for (var itemReq : request.getItems()) {
-            var book = bookRepository.findById(itemReq.getBookId())
-                    .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_FOUND));
+            var book = bookMap.get(itemReq.getBookId());
 
             if (book.getAvailableQuantity() <= 0) {
                 throw new AppException(ErrorCode.BOOK_NOT_AVAILABLE);
             }
 
             book.setAvailableQuantity(book.getAvailableQuantity() - 1);
-            bookRepository.save(book);
 
             var item = new BorrowItem();
             item.setBorrowRecord(record);
             item.setBook(book);
             item.setDueDate(itemReq.getDueDate());
-            // status = BORROWING qua @PrePersist
             borrowItemRepository.save(item);
         }
 
-        // Đóng reservation sau khi đã tạo phiếu mượn
         if (reservation != null) {
             reservation.setStatus(ReservationStatus.CONFIRMED);
-            reservationRepository.save(reservation);
         }
 
-        // Load lại để có đủ items cho mapper
-        record = borrowRecordRepository.findById(record.getId()).orElseThrow();
-        return borrowMapper.toResponse(record);
+        return borrowMapper.toResponse(fetchFullGraph(record.getId()));
     }
 
-    // ── Thủ thư xử lý trả sách ──────────────────────────────────────────────
+    // Thủ thư xử lý trả sách
     @Transactional
     @Override
     public BorrowRecordResponse processReturn(UUID recordId, ReturnRequest request) {
 
-        var record = borrowRecordRepository.findById(recordId)
-                .orElseThrow(() -> new AppException(ErrorCode.BORROW_RECORD_NOT_FOUND));
-
+        var record = fetchFullGraph(recordId);
         LocalDate today = LocalDate.now();
 
+        // BATCH LOAD ITEMS
+        List<UUID> itemIds = request.getItems().stream()
+                .map(ReturnRequest.ReturnItemRequest::getBorrowItemId)
+                .toList();
+
+        Map<UUID, BorrowItem> itemMap = borrowItemRepository.findAllById(itemIds)
+                .stream()
+                .collect(Collectors.toMap(BorrowItem::getId, i -> i));
+
+        if (itemMap.size() != itemIds.size()) {
+            throw new AppException(ErrorCode.BORROW_ITEM_NOT_FOUND);
+        }
+
         for (var itemReq : request.getItems()) {
-
-            var item = borrowItemRepository.findById(itemReq.getBorrowItemId())
-                    .orElseThrow(() -> new AppException(ErrorCode.BORROW_ITEM_NOT_FOUND));
-
+            var item = itemMap.get(itemReq.getBorrowItemId());
             if (item.getStatus() != BorrowItemStatus.BORROWING) {
                 throw new AppException(ErrorCode.BORROW_ITEM_ALREADY_RETURNED);
             }
@@ -123,85 +148,90 @@ public class BorrowServiceImpl implements BorrowService {
             if ((itemReq.getStatus() == BorrowItemStatus.DAMAGED
                     || itemReq.getStatus() == BorrowItemStatus.LOST)
                     && itemReq.getDamageLevel() == null) {
-
                 throw new AppException(ErrorCode.DAMAGE_LEVEL_REQUIRED);
             }
 
             item.setReturnDate(today);
             item.setStatus(itemReq.getStatus());
 
-            // Phạt trả muộn — tự động
             if (today.isAfter(item.getDueDate())) {
                 createLateFine(item, today, itemReq.getNote());
             }
 
-            // Phạt hỏng/mất — thủ thư nhập
-            if (itemReq.getStatus() == BorrowItemStatus.DAMAGED
-                    || itemReq.getStatus() == BorrowItemStatus.LOST) {
-                FineType type = itemReq.getStatus() == BorrowItemStatus.LOST
-                        ? FineType.LOST : FineType.DAMAGED;
+            if (itemReq.getStatus() == BorrowItemStatus.DAMAGED || itemReq.getStatus() == BorrowItemStatus.LOST) {
+                FineType type = itemReq.getStatus() == BorrowItemStatus.LOST ? FineType.LOST : FineType.DAMAGED;
                 createDamageFine(item, type, itemReq.getDamageLevel(), itemReq.getNote());
             }
 
-            // Hoàn lại số lượng (chỉ khi không phải LOST)
             if (itemReq.getStatus() != BorrowItemStatus.LOST) {
                 var book = item.getBook();
                 book.setAvailableQuantity(book.getAvailableQuantity() + 1);
-                bookRepository.save(book);
             }
-
-            borrowItemRepository.save(item);
         }
 
-        // Cập nhật status BorrowRecord nếu tất cả items đã xong
         boolean allDone = record.getItems().stream()
                 .allMatch(i -> i.getStatus() != BorrowItemStatus.BORROWING);
         if (allDone) record.setStatus(BorrowStatus.COMPLETED);
 
-        return borrowMapper.toResponse(borrowRecordRepository.save(record));
+        return borrowMapper.toResponse(fetchFullGraph(recordId));
     }
 
+    // getById
     @Override
+    @Transactional(readOnly = true)
     public BorrowRecordResponse getById(UUID recordId) {
-        return borrowMapper.toResponse(
-                borrowRecordRepository.findById(recordId)
-                        .orElseThrow(() -> new AppException(ErrorCode.BORROW_RECORD_NOT_FOUND)));
+        return borrowMapper.toResponse(fetchFullGraph(recordId));
     }
 
+    // search
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<BorrowRecordResponse> search(BorrowRecordSearchRequest request) {
 
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
-
-        Page<BorrowRecord> pageData;
 
         UUID studentId = request.getStudentId();
         BorrowStatus status = request.getStatus();
         String keyword = request.getKeyword();
 
-        // CASE 1: search theo studentId
+        Page<UUID> idPage;
         if (studentId != null) {
-            pageData = borrowRecordRepository
-                    .findByStudentIdOrderByBorrowedAtDesc(studentId, pageable);
-
-            // CASE 2: search theo status + keyword
+            idPage = borrowRecordRepository.findIdsByStudentId(studentId, pageable);
         } else if (status != null) {
             if (keyword != null && !keyword.isBlank()) {
-                pageData = borrowRecordRepository.searchByStatusAndKeyword(status, keyword, pageable);
+                idPage = borrowRecordRepository.findIdsByStatusAndKeyword(status, keyword, pageable);
             } else {
-                pageData = borrowRecordRepository.findByStatusOrderByBorrowedAtDesc(status, pageable);
+                idPage = borrowRecordRepository.findIdsByStatus(status, pageable);
             }
-
-            // CASE 3: không truyền gì → lấy tất cả
         } else {
-            pageData = borrowRecordRepository.findAllByOrderByBorrowedAtDesc(pageable);
+            idPage = borrowRecordRepository.findAllIds(pageable);
         }
 
-        return PageResponse.from(pageData.map(borrowMapper::toResponse));
+        List<UUID> ids = idPage.getContent();
+        if (ids.isEmpty()) {
+            return PageResponse.from(new org.springframework.data.domain.PageImpl<>(
+                    List.of(), pageable, 0));
+        }
+
+        // 2 query, Hibernate merge vào session cache
+        borrowRecordRepository.fetchWithFines(ids);
+        List<BorrowRecord> records = borrowRecordRepository.fetchWithItems(ids);
+
+        Map<UUID, BorrowRecord> map = records.stream()
+                .collect(Collectors.toMap(BorrowRecord::getId, r -> r));
+
+        List<BorrowRecordResponse> content = ids.stream()
+                .map(map::get)
+                .filter(Objects::nonNull)
+                .map(borrowMapper::toResponse)
+                .toList();
+
+        return PageResponse.from(new org.springframework.data.domain.PageImpl<>(
+                content, pageable, idPage.getTotalElements()));
     }
 
-    // ── Fine helpers ─────────────────────────────────────────────────────────
 
+    // Fine helpers
     private void createLateFine(BorrowItem item, LocalDate returnDate, String note) {
         long overdueDays = ChronoUnit.DAYS.between(item.getDueDate(), returnDate);
         List<FinePolicy> brackets = finePolicyRepository

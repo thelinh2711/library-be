@@ -3,14 +3,13 @@ package com.example.library_be.entity;
 import com.example.library_be.entity.enums.BorrowStatus;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(
@@ -21,8 +20,10 @@ import java.util.UUID;
         }
 )
 @Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class BorrowRecord {
 
+    @EqualsAndHashCode.Include
     @Id
     @UuidGenerator
     @JdbcTypeCode(SqlTypes.VARCHAR)
@@ -50,7 +51,7 @@ public class BorrowRecord {
     private String staffNote;
 
     @OneToMany(mappedBy = "borrowRecord", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<BorrowItem> items = new ArrayList<>();
+    private Set<BorrowItem> items = new LinkedHashSet<>();
 
     @PrePersist
     public void prePersist() {

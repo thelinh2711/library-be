@@ -4,6 +4,7 @@ import com.example.library_be.entity.enums.FineType;
 import com.example.library_be.entity.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
@@ -21,8 +22,10 @@ import java.util.UUID;
         }
 )
 @Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Fine {
 
+    @EqualsAndHashCode.Include
     @Id
     @UuidGenerator
     @JdbcTypeCode(SqlTypes.VARCHAR)

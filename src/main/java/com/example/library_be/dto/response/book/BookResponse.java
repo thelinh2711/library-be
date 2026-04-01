@@ -21,4 +21,5 @@ public class BookResponse {
     private BigDecimal price;
     private String description;
     private String imageUrl;
+    private Long version;
 }

@@ -100,6 +100,11 @@ public class BookServiceImpl implements BookService {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_FOUND));
 
+        // CHECK CONCURRENCY
+        if (!book.getVersion().equals(request.getVersion())) {
+            throw new AppException(ErrorCode.CONFLICT);
+        }
+
         int quantity = request.getQuantity() != null
                 ? request.getQuantity()
                 : book.getQuantity();
