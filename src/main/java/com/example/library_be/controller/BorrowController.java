@@ -8,6 +8,7 @@ import com.example.library_be.dto.response.PageResponse;
 import com.example.library_be.dto.response.borrow.BorrowRecordResponse;
 import com.example.library_be.entity.User;
 import com.example.library_be.entity.enums.BorrowStatus;
+import com.example.library_be.security.CustomUserDetails;
 import com.example.library_be.service.BorrowService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class BorrowController {
 
     // Thủ thư tạo phiếu mượn
     @PostMapping
-    @PreAuthorize("hasRole('LIBRARIAN') or hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ApiResponse<BorrowRecordResponse> create(
             @Valid @RequestBody BorrowRequest request) {
         return ApiResponse.success(borrowService.createBorrow(request));
@@ -36,7 +37,7 @@ public class BorrowController {
 
     // Thủ thư xử lý trả sách
     @PostMapping("/{id}/return")
-    @PreAuthorize("hasRole('LIBRARIAN') or hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ApiResponse<BorrowRecordResponse> processReturn(
             @PathVariable UUID id,
             @Valid @RequestBody ReturnRequest request) {
@@ -45,7 +46,6 @@ public class BorrowController {
 
     // Xem chi tiết 1 phiếu mượn
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('LIBRARIAN') or hasRole('ADMIN') or hasRole('STUDENT')")
     public ApiResponse<BorrowRecordResponse> getById(@PathVariable UUID id) {
         return ApiResponse.success(borrowService.getById(id));
     }
@@ -54,12 +54,12 @@ public class BorrowController {
     @GetMapping("/my")
     @PreAuthorize("hasRole('STUDENT')")
     public ApiResponse<PageResponse<BorrowRecordResponse>> getMy(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         BorrowRecordSearchRequest request = new BorrowRecordSearchRequest();
-        request.setStudentId(user.getId());
+        request.setStudentId(userDetails.getUserId());
         request.setPage(page);
         request.setSize(size);
 
@@ -67,7 +67,7 @@ public class BorrowController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('LIBRARIAN') or hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ApiResponse<PageResponse<BorrowRecordResponse>> search(
             BorrowRecordSearchRequest request) {
         return ApiResponse.success(borrowService.search(request));

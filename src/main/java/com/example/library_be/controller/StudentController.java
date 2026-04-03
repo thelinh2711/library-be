@@ -8,6 +8,7 @@ import com.example.library_be.dto.response.ApiResponse;
 import com.example.library_be.dto.response.PageResponse;
 import com.example.library_be.dto.response.student.StudentResponse;
 import com.example.library_be.entity.User;
+import com.example.library_be.security.CustomUserDetails;
 import com.example.library_be.service.StudentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +41,7 @@ public class StudentController {
         return ApiResponse.success(studentService.create(request));
     }
 
-    // ==================== Lấy sinh viên theo ID ====================
+    // Lấy sinh viên theo ID
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ApiResponse<StudentResponse> getById(@PathVariable UUID id) {
@@ -87,7 +88,9 @@ public class StudentController {
     // chỉ STUDENT được xem thông tin của chính mình
     @GetMapping("/me")
     @PreAuthorize("hasRole('STUDENT')")
-    public ApiResponse<StudentResponse> getMyProfile(@AuthenticationPrincipal User user) {
-        return ApiResponse.success(studentService.getMyProfile(user.getId()));
+    public ApiResponse<StudentResponse> getMyProfile(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        return ApiResponse.success(studentService.getMyProfile(userDetails.getUserId()));
     }
 }

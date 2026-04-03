@@ -35,7 +35,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final RedisService redisService;
 
-    // ================= REGISTER =================
+    // REGISTER
     @Override
     public UserResponse createUser(RegisterRequest request) {
 
@@ -51,7 +51,7 @@ public class AuthServiceImpl implements AuthService {
 
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        // 🔥 chỉ tạo LIBRARIAN
+        // chỉ tạo LIBRARIAN
         user.setRole(Role.LIBRARIAN);
 
         userRepository.save(user);
@@ -76,14 +76,13 @@ public class AuthServiceImpl implements AuthService {
         String key = "refresh_token:" + user.getId();
         redisService.save(key, refreshToken, jwtService.getRefreshExpiration());
 
-        // ✅ set cookie
+        // set cookie
         addRefreshTokenCookie(response, refreshToken);
 
-        // ❌ KHÔNG trả refreshToken nữa
         return authMapper.toAuthResponse(accessToken);
     }
 
-    // ================= REFRESH =================
+    // REFRESH
     @Override
     public AuthResponse refresh(String refreshToken, HttpServletResponse response) {
 
@@ -109,13 +108,13 @@ public class AuthServiceImpl implements AuthService {
         // update Redis
         redisService.save(key, newRefreshToken, jwtService.getRefreshExpiration());
 
-        // ✅ set cookie mới
+        // set cookie mới
         addRefreshTokenCookie(response, newRefreshToken);
 
         return authMapper.toAuthResponse(newAccessToken);
     }
 
-    // ================= LOGOUT =================
+    // LOGOUT
     @Override
     public void logout(String refreshToken, HttpServletResponse response) {
 
@@ -124,10 +123,9 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String userId = jwtService.extractUserId(refreshToken);
-
         redisService.delete("refresh_token:" + userId);
 
-        // ✅ xoá cookie
+        // xoá cookie
         Cookie cookie = new Cookie("refreshToken", null);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
@@ -141,7 +139,7 @@ public class AuthServiceImpl implements AuthService {
         cookie.setHttpOnly(true);
         cookie.setPath("/");
         cookie.setMaxAge((int) (jwtService.getRefreshExpiration() / 1000));
-        cookie.setSecure(false); // dev
+        cookie.setSecure(false);
 
         response.addCookie(cookie);
     }

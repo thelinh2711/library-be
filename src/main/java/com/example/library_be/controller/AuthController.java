@@ -8,6 +8,7 @@ import com.example.library_be.dto.response.ApiResponse;
 import com.example.library_be.dto.response.auth.AuthResponse;
 import com.example.library_be.dto.response.user.UserResponse;
 import com.example.library_be.entity.User;
+import com.example.library_be.security.CustomUserDetails;
 import com.example.library_be.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -55,9 +56,11 @@ public class AuthController {
     }
 
     @PutMapping("/change-password")
-    public ApiResponse<String> changePassword(@AuthenticationPrincipal User user, @Valid @RequestBody ChangePasswordRequest request) {
-        authService.changePassword(user.getId(), request);
+    public ApiResponse<String> changePassword(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        authService.changePassword(userDetails.getUser().getId(), request);
         return ApiResponse.success("Password changed successfully");
     }
-
 }

@@ -16,7 +16,7 @@ public class JwtService {
 
     private final JwtConfig jwtConfig;
 
-    // ================== PRIVATE ==================
+    // PRIVATE
 
     private Key getSignKey() {
         return Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes());
@@ -30,8 +30,7 @@ public class JwtService {
                 .getBody();
     }
 
-    // ================== GENERATE TOKEN ==================
-
+    // GENERATE TOKEN
     public String generateAccessToken(User user) {
         return Jwts.builder()
                 .setSubject(user.getId().toString())
@@ -54,7 +53,7 @@ public class JwtService {
                 .compact();
     }
 
-    // ================== EXTRACT ==================
+    // EXTRACT
 
     public String extractUserId(String token) {
         return extractAllClaims(token).getSubject();
@@ -76,7 +75,7 @@ public class JwtService {
         return extractAllClaims(token).getExpiration();
     }
 
-    // ================== VALIDATE ==================
+    // VALIDATE
 
     public boolean isTokenValid(String token) {
         try {

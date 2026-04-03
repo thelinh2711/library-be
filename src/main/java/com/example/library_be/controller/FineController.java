@@ -5,6 +5,7 @@ import com.example.library_be.dto.response.ApiResponse;
 import com.example.library_be.dto.response.PageResponse;
 import com.example.library_be.dto.response.borrow.BorrowRecordResponse;
 import com.example.library_be.entity.enums.PaymentStatus;
+import com.example.library_be.security.CustomUserDetails;
 import com.example.library_be.service.FineService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,11 +34,15 @@ public class FineController {
     @GetMapping("/my")
     @PreAuthorize("hasRole('STUDENT')")
     public ApiResponse<PageResponse<BorrowRecordResponse.FineResponse>> getMy(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(defaultValue = "0")  int page,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        UUID studentId = UUID.fromString(userDetails.getUsername());
-        return ApiResponse.success(fineService.getByStudent(studentId, page, size));
+
+        UUID studentId = userDetails.getUserId();
+
+        return ApiResponse.success(
+                fineService.getByStudent(studentId, page, size)
+        );
     }
 
     @GetMapping("/student/{studentId}")
