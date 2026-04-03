@@ -41,8 +41,9 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
-        if (!jwtService.isTokenValid(token)) {
-            filterChain.doFilter(request, response);
+        if (!jwtService.isTokenValid(token) || !jwtService.isAccessToken(token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Invalid or expired token");
             return;
         }
 
@@ -53,15 +54,17 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (user != null) {
 
-            List<SimpleGrantedAuthority> authorities = List.of(
-                    new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
-            );
+//            List<SimpleGrantedAuthority> authorities = List.of(
+//                    new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+//            );
+
+            CustomUserDetails userDetails = new CustomUserDetails(user);
 
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(
-                            user,
+                            userDetails,
                             null,
-                            authorities
+                            userDetails.getAuthorities()
                     );
 
             SecurityContextHolder.getContext().setAuthentication(auth);
@@ -70,4 +73,3 @@ public class JwtFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
-

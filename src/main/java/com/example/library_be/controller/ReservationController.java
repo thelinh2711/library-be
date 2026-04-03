@@ -6,6 +6,7 @@ import com.example.library_be.dto.response.ApiResponse;
 import com.example.library_be.dto.response.PageResponse;
 import com.example.library_be.dto.response.borrow.ReservationResponse;
 import com.example.library_be.entity.User;
+import com.example.library_be.security.CustomUserDetails;
 import com.example.library_be.service.ReservationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,11 +27,11 @@ public class ReservationController {
     @PostMapping
     @PreAuthorize("hasRole('STUDENT')")
     public ApiResponse<ReservationResponse> create(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ReservationRequest request) {
 
         return ApiResponse.success(
-                reservationService.create(user.getId(), request)
+                reservationService.create(userDetails.getUserId(), request)
         );
     }
 
@@ -38,11 +39,11 @@ public class ReservationController {
     @GetMapping("/my")
     @PreAuthorize("hasRole('STUDENT')")
     public ApiResponse<PageResponse<ReservationResponse>> getMy(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @ModelAttribute ReservationSearchRequest request) {
 
-        // 🔒 tránh hack studentId
-        request.setStudentId(user.getId());
+        // chống hack studentId từ FE
+        request.setStudentId(userDetails.getUserId());
 
         return ApiResponse.success(
                 reservationService.search(request)
