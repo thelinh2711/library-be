@@ -13,11 +13,15 @@ import com.example.library_be.exception.ErrorCode;
 import com.example.library_be.mapper.AuthMapper;
 import com.example.library_be.mapper.UserMapper;
 import com.example.library_be.repository.UserRepository;
+import com.example.library_be.security.CustomUserDetails;
 import com.example.library_be.security.JwtService;
 import com.example.library_be.service.AuthService;
 import com.example.library_be.service.RedisService;
 import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,6 +38,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RedisService redisService;
+    private final AuthenticationManager authenticationManager;
 
     // REGISTER
     @Override
@@ -62,12 +67,16 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse login(LoginRequest request, HttpServletResponse response) {
 
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()
+                )
+        );
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new AppException(ErrorCode.INVALID_PASSWORD);
-        }
+        // ✅ Lấy user từ principal thay vì query DB lại
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        User user = userDetails.getUser();
 
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
