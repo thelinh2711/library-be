@@ -6,6 +6,9 @@ import lombok.Getter;
 
 @Getter
 public enum ErrorCode {
+
+    UNAUTHENTICATED(2001, "Chưa xác thực", HttpStatus.UNAUTHORIZED),
+    FORBIDDEN(2002, "Không có quyền", HttpStatus.FORBIDDEN),
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR),
     BAD_REQUEST(1000, "Yêu cầu không hợp lệ", HttpStatus.BAD_REQUEST),
     INVALID_KEY(1001, "Invalid message key", HttpStatus.BAD_REQUEST),
@@ -16,7 +19,7 @@ public enum ErrorCode {
     USER_NOT_FOUND(1006, "User không tồn tại", HttpStatus.NOT_FOUND),
     INVALID_PASSWORD(1007, "Sai mật khẩu", HttpStatus.UNAUTHORIZED),
     INVALID_REFRESH_TOKEN(1008, "Refresh token không hợp lệ", HttpStatus.UNAUTHORIZED),
-    UNAUTHENTICATED(1009, "Chưa xác thực", HttpStatus.UNAUTHORIZED),
+    //UNAUTHENTICATED(1009, "Chưa xác thực", HttpStatus.UNAUTHORIZED),
     CATEGORY_NOT_FOUND(1010, "Category not found", HttpStatus.NOT_FOUND),
     CATEGORY_ALREADY_EXISTS(1011, "Category already exists", HttpStatus.BAD_REQUEST),
     AUTHOR_NOT_FOUND(1012, "Author not found", HttpStatus.NOT_FOUND),
