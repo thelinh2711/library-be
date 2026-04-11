@@ -40,24 +40,69 @@ public class CustomUserDetails implements UserDetails, OidcUser {
     }
 
     // OidcUser
-    @Override public Map<String, Object> getClaims() { return attributes; }
-    @Override public OidcUserInfo getUserInfo()       { return userInfo; }
-    @Override public OidcIdToken getIdToken()         { return idToken; }
+    @Override
+    public Map<String, Object> getClaims() {
+        return attributes;
+    }
+
+    @Override
+    public OidcUserInfo getUserInfo() {
+        return userInfo;
+    }
+
+    @Override
+    public OidcIdToken getIdToken() {
+        return idToken;
+    }
 
     // OAuth2User
-    @Override public Map<String, Object> getAttributes() { return attributes; }
-    @Override public String getName()                     { return user.getEmail(); }
+    @Override
+    public Map<String, Object> getAttributes() {
+        return attributes;
+    }
+
+    @Override
+    public String getName() {
+        return user.getEmail();
+    }
 
     // UserDetails
-    @Override public Collection<? extends GrantedAuthority> getAuthorities() {
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
     }
-    @Override public String getPassword()              { return user.getPassword(); }
-    @Override public String getUsername()              { return user.getEmail(); }
-    @Override public boolean isEnabled()               { return user.getIsActive(); }
-    @Override public boolean isAccountNonExpired()     { return true; }
-    @Override public boolean isAccountNonLocked()      { return true; }
-    @Override public boolean isCredentialsNonExpired() { return true; }
 
-    public UUID getUserId() { return user.getId(); }
+    @Override
+    public String getPassword() {
+        return user.getPassword();
+    }
+
+    @Override
+    public String getUsername() {
+        return user.getEmail();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return user.getIsActive();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    public UUID getUserId() {
+        return user.getId();
+    }
 }
