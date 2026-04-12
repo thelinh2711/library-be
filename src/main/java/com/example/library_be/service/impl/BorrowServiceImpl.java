@@ -13,6 +13,7 @@ import com.example.library_be.mapper.BorrowMapper;
 import com.example.library_be.repository.*;
 import com.example.library_be.service.BorrowService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BorrowServiceImpl implements BorrowService {
 
     private final BorrowRecordRepository borrowRecordRepository;
@@ -44,9 +46,13 @@ public class BorrowServiceImpl implements BorrowService {
 
     // ── Helper: load full graph vào session cache
     private BorrowRecord fetchFullGraph(UUID id) {
+        log.debug("Fetching full borrow graph id={}", id);
         borrowRecordRepository.findByIdWithFines(id); // merge fines vào cache
         return borrowRecordRepository.findByIdWithItems(id)
-                .orElseThrow(() -> new AppException(ErrorCode.BORROW_RECORD_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.warn("Borrow record not found id={}", id);
+                    return new AppException(ErrorCode.BORROW_RECORD_NOT_FOUND);
+                });
     }
 
     // Thủ thư tạo phiếu mượn
@@ -54,22 +60,38 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     public BorrowRecordResponse createBorrow(BorrowRequest request) {
 
+        log.info("Create borrow request studentId={}, items={}",
+                request.getStudentId(),
+                request.getItems().size());
+
         var student = studentRepository.findById(request.getStudentId())
-                .orElseThrow(() -> new AppException(ErrorCode.STUDENT_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.warn("Student not found id={}", request.getStudentId());
+                    return new AppException(ErrorCode.STUDENT_NOT_FOUND);
+                });
 
         if (fineRepository.hasUnpaidFine(student.getId())) {
+            log.warn("Student has unpaid fine studentId={}", student.getId());
             throw new AppException(ErrorCode.STUDENT_HAS_UNPAID_FINE);
         }
 
         BookReservation reservation = null;
         if (request.getReservationId() != null) {
+            log.debug("Checking reservation id={}", request.getReservationId());
+
             reservation = reservationRepository.findById(request.getReservationId())
-                    .orElseThrow(() -> new AppException(ErrorCode.RESERVATION_NOT_FOUND));
+                    .orElseThrow(() -> {
+                        log.warn("Reservation not found id={}", request.getReservationId());
+                        return new AppException(ErrorCode.RESERVATION_NOT_FOUND);
+                    });
 
             if (reservation.getStatus() != ReservationStatus.CONFIRMED) {
+                log.warn("Reservation not confirmed id={}", reservation.getId());
                 throw new AppException(ErrorCode.RESERVATION_NOT_CONFIRMED);
             }
+
             if (reservation.getExpiredAt().isBefore(LocalDateTime.now())) {
+                log.warn("Reservation expired id={}", reservation.getId());
                 throw new AppException(ErrorCode.RESERVATION_EXPIRED);
             }
         }
@@ -78,27 +100,34 @@ public class BorrowServiceImpl implements BorrowService {
         record.setStudent(student);
         record.setReservation(reservation);
         record.setStaffNote(request.getStaffNote());
+        record.setStatus(BorrowStatus.BORROWING);
+
         record = borrowRecordRepository.save(record);
 
-        // BATCH LOAD BOOK
+        log.info("Borrow record created id={}", record.getId());
+
         List<UUID> bookIds = request.getItems().stream()
                 .map(item -> item.getBookId())
                 .distinct()
                 .toList();
 
+        log.debug("Loading books count={}", bookIds.size());
+
         Map<UUID, Book> bookMap = bookRepository.findAllById(bookIds)
                 .stream()
                 .collect(Collectors.toMap(Book::getId, b -> b));
 
-        // validate đủ book
         if (bookMap.size() != bookIds.size()) {
+            log.error("Book mismatch expected={} found={}", bookIds.size(), bookMap.size());
             throw new AppException(ErrorCode.BOOK_NOT_FOUND);
         }
 
         for (var itemReq : request.getItems()) {
+
             var book = bookMap.get(itemReq.getBookId());
 
             if (book.getAvailableQuantity() <= 0) {
+                log.warn("Book not available bookId={}", book.getId());
                 throw new AppException(ErrorCode.BOOK_NOT_AVAILABLE);
             }
 
@@ -108,12 +137,17 @@ public class BorrowServiceImpl implements BorrowService {
             item.setBorrowRecord(record);
             item.setBook(book);
             item.setDueDate(itemReq.getDueDate());
+            item.setStatus(BorrowItemStatus.BORROWING);
             borrowItemRepository.save(item);
+
+            log.debug("Borrow item created bookId={}", book.getId());
         }
 
         if (reservation != null) {
             reservation.setStatus(ReservationStatus.CONFIRMED);
         }
+
+        log.info("Borrow created successfully recordId={}", record.getId());
 
         return borrowMapper.toResponse(fetchFullGraph(record.getId()));
     }
@@ -256,6 +290,7 @@ public class BorrowServiceImpl implements BorrowService {
         fine.setFinePolicy(appliedPolicy);
         fine.setType(FineType.LATE);
         fine.setAmount(amount);
+        fine.setPaymentStatus(PaymentStatus.UNPAID);
         fine.setNote("Trả muộn " + overdueDays + " ngày" + (note != null ? " — " + note : ""));
         fineRepository.save(fine);
     }
@@ -271,6 +306,7 @@ public class BorrowServiceImpl implements BorrowService {
         fine.setFinePolicy(policy);
         fine.setType(type);
         fine.setAmount(item.getBook().getPrice().multiply(policy.getMultiplier()));
+        fine.setPaymentStatus(PaymentStatus.UNPAID);
         fine.setNote(damageLevel + (note != null ? " — " + note : ""));
         fineRepository.save(fine);
     }

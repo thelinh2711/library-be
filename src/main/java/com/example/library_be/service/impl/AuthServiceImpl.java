@@ -19,6 +19,7 @@ import com.example.library_be.service.AuthService;
 import com.example.library_be.service.RedisService;
 import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -30,6 +31,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
@@ -44,29 +46,32 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public UserResponse createUser(RegisterRequest request) {
 
+        log.info("Register attempt with email={}", request.getEmail());
+
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            log.warn("Register failed: email already exists: {}", request.getEmail());
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
+            log.warn("Register failed: password mismatch for email={}", request.getEmail());
             throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
         }
 
         User user = userMapper.toUser(request);
-
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-
-        // chỉ tạo LIBRARIAN
         user.setRole(Role.LIBRARIAN);
 
         userRepository.save(user);
+
+        log.info("User registered successfully with email={}", request.getEmail());
 
         return userMapper.toUserResponse(user);
     }
 
     @Override
     public AuthResponse login(LoginRequest request, HttpServletResponse response) {
-
+        log.info("Login attempt with email={}", request.getEmail());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -74,9 +79,11 @@ public class AuthServiceImpl implements AuthService {
                 )
         );
 
-        // ✅ Lấy user từ principal thay vì query DB lại
+        // Lấy user từ principal thay vì query DB lại
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         User user = userDetails.getUser();
+
+        log.info("Login success for userId={}, email={}", user.getId(), user.getEmail());
 
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
@@ -94,13 +101,14 @@ public class AuthServiceImpl implements AuthService {
     // REFRESH
     @Override
     public AuthResponse refresh(String refreshToken, HttpServletResponse response) {
-
+        log.info("Refresh token attempt");
         if (!jwtService.isTokenValid(refreshToken) || !jwtService.isRefreshToken(refreshToken)) {
+            log.warn("Invalid refresh token");
             throw new AppException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         String userId = jwtService.extractUserId(refreshToken);
-
+        log.info("Refreshing token for userId={}", userId);
         String key = "refresh_token:" + userId;
         String storedToken = redisService.get(key);
 
@@ -126,14 +134,15 @@ public class AuthServiceImpl implements AuthService {
     // LOGOUT
     @Override
     public void logout(String refreshToken, HttpServletResponse response) {
-
+        log.info("Logout attempt");
         if (!jwtService.isTokenValid(refreshToken)) {
+            log.warn("Logout failed: invalid token");
             return;
         }
 
         String userId = jwtService.extractUserId(refreshToken);
         redisService.delete("refresh_token:" + userId);
-
+        log.info("User logged out successfully userId={}", userId);
         // xoá cookie
         Cookie cookie = new Cookie("refreshToken", null);
         cookie.setHttpOnly(true);
@@ -155,27 +164,32 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void changePassword(UUID userId, ChangePasswordRequest request) {
+        log.info("Change password attempt for userId={}", userId);
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.warn("User not found: userId={}", userId);
+                    return new AppException(ErrorCode.USER_NOT_FOUND);
+                });
 
-        // 1. Sai mật khẩu cũ
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            log.warn("Change password failed: wrong old password for userId={}", userId);
             throw new AppException(ErrorCode.INVALID_PASSWORD);
         }
 
-        // 2. Confirm không khớp
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            log.warn("Change password failed: confirm mismatch for userId={}", userId);
             throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
         }
 
-        // 3. Password mới trùng password cũ
         if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            log.warn("Change password failed: new password same as old for userId={}", userId);
             throw new AppException(ErrorCode.NEW_PASSWORD_DUPLICATE);
         }
 
-        // 4. Encode & save
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+
+        log.info("Password changed successfully for userId={}", userId);
     }
 }

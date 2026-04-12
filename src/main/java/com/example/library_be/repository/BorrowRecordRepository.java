@@ -57,23 +57,41 @@ public interface BorrowRecordRepository extends JpaRepository<BorrowRecord, UUID
     List<BorrowRecord> fetchWithFines(@Param("ids") List<UUID> ids);
 
     // ── Pagination IDs ────────────────────────────────────────────────────────
-    @Query("SELECT r.id FROM BorrowRecord r WHERE r.student.id = :studentId ORDER BY r.borrowedAt DESC")
+    @Query("""
+    SELECT r.id FROM BorrowRecord r
+    WHERE r.student.id = :studentId
+    ORDER BY r.createdAt DESC
+""")
     Page<UUID> findIdsByStudentId(@Param("studentId") UUID studentId, Pageable pageable);
 
-    @Query("SELECT r.id FROM BorrowRecord r WHERE r.status = :status ORDER BY r.borrowedAt DESC")
-    Page<UUID> findIdsByStatus(@Param("status") BorrowStatus status, Pageable pageable);
 
     @Query("""
-        SELECT r.id FROM BorrowRecord r
-        JOIN r.student s
-        WHERE r.status = :status
-          AND (LOWER(s.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-            OR LOWER(s.studentCode) LIKE LOWER(CONCAT('%', :keyword, '%')))
-        ORDER BY r.borrowedAt DESC
-        """)
-    Page<UUID> findIdsByStatusAndKeyword(@Param("status") BorrowStatus status, @Param("keyword") String keyword, Pageable pageable);
+    SELECT r.id FROM BorrowRecord r
+    WHERE r.status = :status
+    ORDER BY r.createdAt DESC
+""")
+    Page<UUID> findIdsByStatus(@Param("status") BorrowStatus status, Pageable pageable);
 
-    @Query("SELECT r.id FROM BorrowRecord r ORDER BY r.borrowedAt DESC")
+
+    @Query("""
+    SELECT r.id FROM BorrowRecord r
+    JOIN r.student s
+    WHERE r.status = :status
+      AND (LOWER(s.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(s.studentCode) LIKE LOWER(CONCAT('%', :keyword, '%')))
+    ORDER BY r.createdAt DESC
+""")
+    Page<UUID> findIdsByStatusAndKeyword(
+            @Param("status") BorrowStatus status,
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
+
+
+    @Query("""
+    SELECT r.id FROM BorrowRecord r
+    ORDER BY r.createdAt DESC
+""")
     Page<UUID> findAllIds(Pageable pageable);
 
     // ── Scheduled job ─────────────────────────────────────────────────────────

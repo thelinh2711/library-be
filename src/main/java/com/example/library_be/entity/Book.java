@@ -19,9 +19,10 @@ import java.util.UUID;
 @Getter
 @Setter
 @ToString(exclude = {"bookAuthors", "bookCategories"})
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Book {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
+public class Book extends BaseAuditable {
 
+    @EqualsAndHashCode.Include
     @Id
     @UuidGenerator
     @JdbcTypeCode(SqlTypes.VARCHAR)
@@ -50,9 +51,7 @@ public class Book {
     @Min(0)
     private Integer availableQuantity;
 
-    // Giá bìa sách — dùng để tính phạt hỏng/mất (price × multiplier)
     @Column(nullable = false, precision = 12, scale = 2)
-    @Min(0)
     private BigDecimal price;
 
     @Column(length = 1000)
