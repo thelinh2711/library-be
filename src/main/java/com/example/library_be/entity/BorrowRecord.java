@@ -12,16 +12,14 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
-@Table(
-        name = "borrow_records",
+@Table(name = "borrow_records",
         indexes = {
                 @Index(name = "idx_borrow_record_student", columnList = "student_id"),
-                @Index(name = "idx_borrow_record_status",  columnList = "status")
-        }
-)
+                @Index(name = "idx_borrow_record_status", columnList = "status")
+        })
 @Data
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class BorrowRecord {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
+public class BorrowRecord extends BaseAuditable {
 
     @EqualsAndHashCode.Include
     @Id
@@ -34,30 +32,17 @@ public class BorrowRecord {
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    // Null nếu sinh viên mượn trực tiếp (không qua đặt trước)
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reservation_id", unique = true)
     private BookReservation reservation;
-
-    @Column(name = "borrowed_at", nullable = false, updatable = false)
-    private LocalDateTime borrowedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private BorrowStatus status;
 
-    // Ghi chú của thủ thư khi tạo phiếu (tình trạng sách lúc cho mượn, v.v.)
     @Column(name = "staff_note", length = 500)
     private String staffNote;
 
     @OneToMany(mappedBy = "borrowRecord", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<BorrowItem> items = new LinkedHashSet<>();
-
-    @PrePersist
-    public void prePersist() {
-        this.borrowedAt = LocalDateTime.now();
-        if (this.status == null) {
-            this.status = BorrowStatus.BORROWING;
-        }
-    }
 }

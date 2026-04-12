@@ -14,6 +14,7 @@ import com.example.library_be.repository.BookReservationRepository;
 import com.example.library_be.repository.StudentRepository;
 import com.example.library_be.service.ReservationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReservationServiceImpl implements ReservationService {
 
     private static final int HOLD_DAYS = 3;
@@ -34,13 +36,11 @@ public class ReservationServiceImpl implements ReservationService {
     private final StudentRepository studentRepository;
     private final ReservationMapper reservationMapper;
 
-    // ─────────────────────────────────────────────
     // CREATE
-    // ─────────────────────────────────────────────
     @Transactional
     @Override
     public ReservationResponse create(UUID studentId, ReservationRequest request) {
-
+        log.info("Create reservation studentId={}, bookId={}", studentId, request.getBookId());
         var student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new AppException(ErrorCode.STUDENT_NOT_FOUND));
 
@@ -48,6 +48,7 @@ public class ReservationServiceImpl implements ReservationService {
                 .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_FOUND));
 
         if (book.getAvailableQuantity() <= 0) {
+            log.warn("Book not available bookId={}", book.getId());
             throw new AppException(ErrorCode.BOOK_NOT_AVAILABLE);
         }
 
@@ -58,6 +59,7 @@ public class ReservationServiceImpl implements ReservationService {
         );
 
         if (alreadyReserved) {
+            log.warn("Reservation already exists studentId={}, bookId={}", studentId, book.getId());
             throw new AppException(ErrorCode.RESERVATION_ALREADY_EXISTS);
         }
 
@@ -65,12 +67,13 @@ public class ReservationServiceImpl implements ReservationService {
         reservation.setStudent(student);
         reservation.setBook(book);
 
-        return reservationMapper.toResponse(reservationRepository.save(reservation));
+        var saved = reservationRepository.save(reservation);
+        log.info("Reservation created id={}", saved.getId());
+
+        return reservationMapper.toResponse(saved);
     }
 
-    // ─────────────────────────────────────────────
     // CONFIRM
-    // ─────────────────────────────────────────────
     @Transactional
     @Override
     public ReservationResponse confirm(UUID reservationId) {

@@ -4,6 +4,7 @@ import com.example.library_be.entity.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
@@ -16,7 +17,9 @@ import java.util.UUID;
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "type")
 @Data
-public class User {
+@EqualsAndHashCode(callSuper = true)
+public class User extends BaseAuditable {
+
     @Id
     @UuidGenerator
     @JdbcTypeCode(SqlTypes.VARCHAR)
@@ -41,14 +44,5 @@ public class User {
 
     @Column(nullable = false)
     private Boolean isActive = true;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    // Tự set thời gian khi insert
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-    }
 }
 

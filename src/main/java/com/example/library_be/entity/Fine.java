@@ -14,16 +14,14 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(
-        name = "fines",
+@Table(name = "fines",
         indexes = {
-                @Index(name = "idx_fine_borrow_item",    columnList = "borrow_item_id"),
+                @Index(name = "idx_fine_borrow_item", columnList = "borrow_item_id"),
                 @Index(name = "idx_fine_payment_status", columnList = "payment_status")
-        }
-)
+        })
 @Data
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Fine {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
+public class Fine extends BaseAuditable {
 
     @EqualsAndHashCode.Include
     @Id
@@ -36,7 +34,6 @@ public class Fine {
     @JoinColumn(name = "borrow_item_id", nullable = false)
     private BorrowItem borrowItem;
 
-    // Policy đã áp dụng — lưu lại để audit dù sau này policy thay đổi
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fine_policy_id")
     private FinePolicy finePolicy;
@@ -45,7 +42,6 @@ public class Fine {
     @Column(nullable = false, length = 20)
     private FineType type;
 
-    // Số tiền thực tế đã tính tại thời điểm tạo Fine
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
@@ -56,18 +52,6 @@ public class Fine {
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 
-    // Ghi chú thủ thư: mô tả tình trạng hỏng, lý do miễn giảm, v.v.
     @Column(length = 500)
     private String note;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-        if (this.paymentStatus == null) {
-            this.paymentStatus = PaymentStatus.UNPAID;
-        }
-    }
 }
