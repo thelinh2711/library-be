@@ -18,6 +18,7 @@ import com.example.library_be.security.JwtService;
 import com.example.library_be.service.AuthService;
 import com.example.library_be.service.RedisService;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -70,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponse login(LoginRequest request, HttpServletResponse response) {
+    public AuthResponse login(LoginRequest request, HttpServletResponse response, HttpServletRequest httpRequest) {
         log.info("Login attempt with email={}", request.getEmail());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -93,14 +94,14 @@ public class AuthServiceImpl implements AuthService {
         redisService.save(key, refreshToken, jwtService.getRefreshExpiration());
 
         // set cookie
-        addRefreshTokenCookie(response, refreshToken);
+        addRefreshTokenCookie(response, refreshToken, httpRequest);
 
         return authMapper.toAuthResponse(accessToken);
     }
 
     // REFRESH
     @Override
-    public AuthResponse refresh(String refreshToken, HttpServletResponse response) {
+    public AuthResponse refresh(String refreshToken, HttpServletResponse response, HttpServletRequest httpRequest) {
         log.info("Refresh token attempt");
         if (!jwtService.isTokenValid(refreshToken) || !jwtService.isRefreshToken(refreshToken)) {
             log.warn("Invalid refresh token");
@@ -126,7 +127,7 @@ public class AuthServiceImpl implements AuthService {
         redisService.save(key, newRefreshToken, jwtService.getRefreshExpiration());
 
         // set cookie mới
-        addRefreshTokenCookie(response, newRefreshToken);
+        addRefreshTokenCookie(response, newRefreshToken, httpRequest);
 
         return authMapper.toAuthResponse(newAccessToken);
     }
@@ -152,14 +153,24 @@ public class AuthServiceImpl implements AuthService {
         response.addCookie(cookie);
     }
 
-    private void addRefreshTokenCookie(HttpServletResponse response, String token) {
-        Cookie cookie = new Cookie("refreshToken", token);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge((int) (jwtService.getRefreshExpiration() / 1000));
-        cookie.setSecure(false);
+    private void addRefreshTokenCookie(HttpServletResponse response,
+                                       String token,
+                                       HttpServletRequest request) {
 
-        response.addCookie(cookie);
+        // Bỏ đọc X-Forwarded-Proto vì Spring Boot tự handle SSL
+        // request.isSecure() = true khi dùng https://localhost:8443
+        boolean isSecure = request.isSecure();
+
+        String cookie = "refreshToken=" + token +
+                "; HttpOnly; Path=/; Max-Age=" + (jwtService.getRefreshExpiration() / 1000);
+
+        if (isSecure) {
+            cookie += "; Secure; SameSite=None";
+        } else {
+            cookie += "; SameSite=Lax";
+        }
+
+        response.setHeader("Set-Cookie", cookie);
     }
 
     @Override

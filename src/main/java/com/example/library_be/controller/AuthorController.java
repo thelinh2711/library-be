@@ -56,7 +56,7 @@ public class AuthorController {
 
     @Operation(summary = "Xóa tác giả", description = "Xóa tác giả theo ID")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         authorService.delete(id);
         return ApiResponse.success("Xóa tác giả thành công", null);

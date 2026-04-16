@@ -53,7 +53,7 @@ public class CategoryController {
 
     @Operation(summary = "Xóa thể loại", description = "Xóa thể loại theo ID")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         categoryService.delete(id);
         return ApiResponse.success("Xóa thành công", null);
