@@ -12,6 +12,7 @@ import com.example.library_be.service.AuthService;
 import com.example.library_be.service.PasswordResetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,18 +42,18 @@ public class AuthController {
     @PostMapping("/login")
     public ApiResponse<AuthResponse> login(
             @RequestBody @Valid LoginRequest request,
-            HttpServletResponse response
+            HttpServletResponse response, HttpServletRequest httpRequest
     ) {
-        return ApiResponse.success(authService.login(request, response));
+        return ApiResponse.success(authService.login(request, response, httpRequest));
     }
 
     @Operation(summary = "Refresh token", description = "Lấy accessToken mới từ refreshToken trong cookie")
     @PostMapping("/refresh")
     public ApiResponse<AuthResponse> refresh(
             @CookieValue("refreshToken") String refreshToken,
-            HttpServletResponse response
+            HttpServletResponse response, HttpServletRequest httpRequest
     ) {
-        return ApiResponse.success(authService.refresh(refreshToken, response));
+        return ApiResponse.success(authService.refresh(refreshToken, response, httpRequest));
     }
 
     @Operation(summary = "Đăng xuất", description = "Xóa refreshToken khỏi cookie và invalidate token")

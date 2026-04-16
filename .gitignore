@@ -36,3 +36,7 @@ build/
 # logs
 logs/
 *.log
+
+*.p12
+*.jks
+keystore.*

@@ -64,7 +64,7 @@ public class StudentController {
 
     @Operation(summary = "Xóa sinh viên", description = "Xóa sinh viên theo ID (ADMIN, LIBRARIAN)")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<String> delete(@PathVariable UUID id) {
         studentService.delete(id);
         return ApiResponse.success("Xóa sinh viên thành công");
