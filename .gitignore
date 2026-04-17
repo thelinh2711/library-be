@@ -32,3 +32,11 @@ build/
 ### VS Code ###
 .vscode/
 .env
+
+# logs
+logs/
+*.log
+
+*.p12
+*.jks
+keystore.*
