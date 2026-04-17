@@ -134,23 +134,27 @@ public class AuthServiceImpl implements AuthService {
 
     // LOGOUT
     @Override
-    public void logout(String refreshToken, HttpServletResponse response) {
+    public void logout(String refreshToken, HttpServletResponse response, HttpServletRequest request) {
         log.info("Logout attempt");
-        if (!jwtService.isTokenValid(refreshToken)) {
-            log.warn("Logout failed: invalid token");
-            return;
+        if (jwtService.isTokenValid(refreshToken)) {
+            String userId = jwtService.extractUserId(refreshToken);
+            redisService.delete("refresh_token:" + userId);
+            log.info("User logged out successfully userId={}", userId);
         }
 
-        String userId = jwtService.extractUserId(refreshToken);
-        redisService.delete("refresh_token:" + userId);
-        log.info("User logged out successfully userId={}", userId);
-        // xoá cookie
-        Cookie cookie = new Cookie("refreshToken", null);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
+        // ✅ Xóa cookie đúng cách — phải match SameSite/Secure với lúc set
+        boolean isSecure = request.isSecure();
 
-        response.addCookie(cookie);
+        String cookie = "refreshToken=" +
+                "; HttpOnly; Path=/; Max-Age=0";  // Max-Age=0 = xóa
+
+        if (isSecure) {
+            cookie += "; Secure; SameSite=None";
+        } else {
+            cookie += "; SameSite=Lax";
+        }
+
+        response.setHeader("Set-Cookie", cookie);
     }
 
     private void addRefreshTokenCookie(HttpServletResponse response,

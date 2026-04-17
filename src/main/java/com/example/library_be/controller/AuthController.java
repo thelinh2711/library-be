@@ -60,9 +60,9 @@ public class AuthController {
     @PostMapping("/logout")
     public ApiResponse<?> logout(
             @CookieValue("refreshToken") String refreshToken,
-            HttpServletResponse response
+            HttpServletResponse response, HttpServletRequest request
     ) {
-        authService.logout(refreshToken, response);
+        authService.logout(refreshToken, response, request);
         return ApiResponse.success(null);
     }
 
