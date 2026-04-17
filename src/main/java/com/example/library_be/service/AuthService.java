@@ -21,7 +21,7 @@ public interface AuthService {
     AuthResponse refresh(String refreshToken, HttpServletResponse response, HttpServletRequest httpRequest);
 
     // logout dùng refreshToken từ cookie
-    void logout(String refreshToken, HttpServletResponse response);
+    void logout(String refreshToken, HttpServletResponse response, HttpServletRequest request);
 
     void changePassword(UUID userId, ChangePasswordRequest request);
 }

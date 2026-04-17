@@ -28,26 +28,33 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
 
-        // Lấy internal user từ CustomUserDetails
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         User user = userDetails.getUser();
 
-        // Generate + lưu token — y hệt login thường
         String accessToken  = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
         String key = "refresh_token:" + user.getId();
         redisService.save(key, refreshToken, jwtService.getRefreshExpiration());
+        addRefreshTokenCookie(response, refreshToken, request);
 
-        // Set cookie — y hệt login thường
-        Cookie cookie = new Cookie("refreshToken", refreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge((int) (jwtService.getRefreshExpiration() / 1000));
-        cookie.setSecure(false);
-        response.addCookie(cookie);
-
-        // Redirect về FE kèm accessToken
         response.sendRedirect(frontendUrl + "/auth/callback?token=" + accessToken);
+    }
+
+    private void addRefreshTokenCookie(HttpServletResponse response,
+                                       String token,
+                                       HttpServletRequest request) {
+        boolean isSecure = request.isSecure();
+
+        String cookie = "refreshToken=" + token +
+                "; HttpOnly; Path=/; Max-Age=" + (jwtService.getRefreshExpiration() / 1000);
+
+        if (isSecure) {
+            cookie += "; Secure; SameSite=None";
+        } else {
+            cookie += "; SameSite=Lax";
+        }
+
+        response.setHeader("Set-Cookie", cookie);
     }
 }

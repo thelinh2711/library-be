@@ -52,6 +52,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/v1/health").permitAll()
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/refresh",
