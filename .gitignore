@@ -39,4 +39,4 @@ logs/
 
 *.p12
 *.jks
-keystore.*
+src/main/resources/keystore.p12
