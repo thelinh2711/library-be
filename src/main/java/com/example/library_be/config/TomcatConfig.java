@@ -14,9 +14,10 @@ public class TomcatConfig {
         return server -> {
             Connector connector = new Connector(TomcatServletWebServerFactory.DEFAULT_PROTOCOL);
             connector.setScheme("http");
-            connector.setPort(8081);
+            String port = System.getenv().getOrDefault("PORT", "8081");
+            connector.setPort(Integer.parseInt(port));
             connector.setSecure(false);
-            connector.setRedirectPort(8443); // ✅ redirect sang HTTPS
+            connector.setRedirectPort(8443); // redirect sang HTTPS
             server.addAdditionalTomcatConnectors(connector);
         };
     }
