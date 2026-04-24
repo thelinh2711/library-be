@@ -20,7 +20,8 @@ public class CorsConfig {
                 "http://localhost:8081",
                 "http://localhost:3000",   // ✅ FE Docker
                 "https://localhost:3000",  // (optional nếu sau này dùng HTTPS FE)
-                "https://localhost:8443"
+                "https://localhost:8443",
+                "https://libratyfe-ekgna5f4hfa9gqad.southeastasia-01.azurewebsites.net"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
